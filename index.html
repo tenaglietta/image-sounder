@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>L'intima esteriorità delle cose | Sound Art Sonifier</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>L'intima esteriorità delle cose</h1>
+      <p class="subtitle">Dispositivo elettroacustico per la traduzione di matrici visive in eventi sonori transitivi.</p>
+    </header>
+
+    <main>
+      <div class="dropzone" id="dropzone">
+        <p id="dropText">Trascina qui un'immagine o fai clic per caricarla</p>
+        <input type="file" id="fileInput" accept="image/*" style="display: none;">
+      </div>
+
+      <div class="preview-container">
+        <canvas id="imageCanvas"></canvas>
+      </div>
+
+      <div class="controls">
+        <button id="playBtn" disabled>Avvia Trasduzione Sonora</button>
+        <button id="stopBtn" disabled>Interrompi</button>
+      </div>
+
+      <div class="status-panel">
+        <p><strong>Punto Scansione:</strong> <span id="scanPos">0 / 0</span></p>
+        <p><strong>Entropia Locale:</strong> <span id="entropyVal">0.00</span></p>
+        <p><strong>Gradiente di Bordo (Sobel):</strong> <span id="gradientVal">0.00</span></p>
+        <p><strong>Frequenza Fondamentale:</strong> <span id="freqVal">0 Hz</span></p>
+      </div>
+    </main>
+
+    <footer>
+      <p>Ispirato alla riflessione sull'invisibilità del presente sonoro e il ruolo dell'osservatore.</p>
+    </footer>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>
