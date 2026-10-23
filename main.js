@@ -1,5 +1,5 @@
-// Configurazione Algoritmo
-const GRID_SIZE = 32; // Griglia 32x32 = 1024 punti di scansione (leggerissima)
+// Algorithm Configuration
+const GRID_SIZE = 32; // 32x32 grid = 1024 scan points (lightweight)
 let audioCtx = null;
 let currentOsc = null;
 let modOsc = null;
@@ -12,7 +12,7 @@ let scanIndex = 0;
 let scanInterval = null;
 let imageAnalysisData = [];
 
-// Elementi DOM
+// DOM Elements
 const dropzone = document.getElementById('dropzone');
 const fileInput = document.getElementById('fileInput');
 const canvas = document.getElementById('imageCanvas');
@@ -25,7 +25,7 @@ const entropyValEl = document.getElementById('entropyVal');
 const gradientValEl = document.getElementById('gradientVal');
 const freqValEl = document.getElementById('freqVal');
 
-// Eventi Upload
+// Upload Events
 dropzone.addEventListener('click', () => fileInput.click());
 fileInput.addEventListener('change', (e) => handleImage(e.target.files[0]));
 dropzone.addEventListener('dragover', (e) => { e.preventDefault(); });
@@ -43,30 +43,30 @@ function handleImage(file) {
     ctx.drawImage(img, 0, 0, GRID_SIZE, GRID_SIZE);
     analyzeImage();
     playBtn.disabled = false;
-    document.getElementById('dropText').innerText = `Caricato: ${file.name}`;
+    document.getElementById('dropText').innerText = `Loaded: ${file.name}`;
   };
   img.src = URL.createObjectURL(file);
 }
 
-// Analisi Strutturale: Entropia + Gradiente Sobel + Traiettoria
+// Structural Analysis: Entropy + Sobel Gradient + Trajectory
 function analyzeImage() {
   const imgData = ctx.getImageData(0, 0, GRID_SIZE, GRID_SIZE);
   const data = imgData.data;
   imageAnalysisData = [];
 
-  // Converti in scala di grigi
+  // Convert to grayscale
   const gray = new Float32Array(GRID_SIZE * GRID_SIZE);
   for (let i = 0; i < data.length; i += 4) {
     gray[i / 4] = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114) / 255;
   }
 
-  // Genera punti di scansione non-lineare (Curva a zig-zag adattiva)
+  // Generate non-linear scan points (Adaptive zigzag curve)
   for (let y = 0; y < GRID_SIZE; y++) {
     for (let x = 0; x < GRID_SIZE; x++) {
       const actualX = (y % 2 === 0) ? x : (GRID_SIZE - 1 - x);
       const idx = y * GRID_SIZE + actualX;
 
-      // 1. Calcolo Gradiente di Bordo (Sobel Semplificato)
+      // 1. Edge Gradient Calculation (Simplified Sobel)
       let gx = 0, gy = 0;
       if (actualX > 0 && actualX < GRID_SIZE - 1 && y > 0 && y < GRID_SIZE - 1) {
         gx = -gray[(y - 1) * GRID_SIZE + (actualX - 1)] + gray[(y - 1) * GRID_SIZE + (actualX + 1)]
@@ -78,7 +78,7 @@ function analyzeImage() {
       }
       const edgeMagnitude = Math.min(1, Math.sqrt(gx * gx + gy * gy));
 
-      // 2. Calcolo Entropia/Variazione Locale (Intorno 3x3)
+      // 2. Local Entropy / Variation Calculation (3x3 Neighborhood)
       let sum = 0, sqSum = 0, count = 0;
       for (let dy = -1; dy <= 1; dy++) {
         for (let dx = -1; dx <= 1; dx++) {
@@ -99,13 +99,13 @@ function analyzeImage() {
         y: y,
         luminance: gray[idx],
         edge: edgeMagnitude,
-        entropy: Math.sqrt(variance) * 2 // Normalizzato
+        entropy: Math.sqrt(variance) * 2 // Normalized
       });
     }
   }
 }
 
-// Inizializzazione Audio Sintetizzatore FM
+// FM Synthesizer Audio Initialization
 function initAudio() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -117,17 +117,17 @@ function initAudio() {
   filter = audioCtx.createBiquadFilter();
   filter.type = 'bandpass';
 
-  // Oscillatore Portante
+  // Carrier Oscillator
   currentOsc = audioCtx.createOscillator();
   currentOsc.type = 'sine';
 
-  // Oscillatore Modulatore (Modulazione di Frequenza per Ruvidezza/Timbro)
+  // Modulator Oscillator (Frequency Modulation for Timbral Roughness)
   modOsc = audioCtx.createOscillator();
   modOsc.type = 'triangle';
 
   modGain = audioCtx.createGain();
 
-  // Conressioni audio
+  // Audio Connections
   modOsc.connect(modGain);
   modGain.connect(currentOsc.frequency);
   currentOsc.connect(filter);
@@ -138,7 +138,7 @@ function initAudio() {
   modOsc.start();
 }
 
-// Avvio Riproduzione
+// Start Playback
 playBtn.addEventListener('click', () => {
   if (!isPlaying) {
     initAudio();
@@ -148,7 +148,7 @@ playBtn.addEventListener('click', () => {
     playBtn.disabled = true;
     stopBtn.disabled = false;
 
-    // Scansione ogni 60ms (ritmo fluido)
+    // Scan every 60ms (smooth rhythm)
     scanInterval = setInterval(updateAudioStep, 60);
   }
 });
@@ -165,7 +165,7 @@ function stopAudio() {
   }
 }
 
-// Aggiornamento Frequenza e parametri timbrici per ogni punto dell'immagine
+// Update Frequency and Timbral Parameters for each image point
 function updateAudioStep() {
   if (scanIndex >= imageAnalysisData.length) {
     stopAudio();
@@ -174,17 +174,17 @@ function updateAudioStep() {
 
   const point = imageAnalysisData[scanIndex];
 
-  // Mappatura non-melodica: Frequenza di base (60Hz - 1200Hz microtonale continua)
+  // Non-melodic mapping: Continuous microtonal base frequency (60Hz - 1200Hz)
   const baseFreq = 60 + Math.pow(point.luminance, 2.2) * 1140;
   
-  // Il gradiente determina la frequenza del modulatore (dissonanza)
+  // Edge gradient determines modulator frequency (dissonance)
   const modFreq = 10 + point.edge * 300;
   
-  // L'entropia/variazione determina l'intensità della modulazione e il Q del filtro
+  // Entropy/variation determines modulation intensity and filter Q
   const modDepth = point.entropy * 400;
   const filterQ = 1 + (1 - point.entropy) * 15;
 
-  // Applicazione parametri audio con transizioni morbide
+  // Apply audio parameters with smooth transitions
   const now = audioCtx.currentTime;
   currentOsc.frequency.setTargetAtTime(baseFreq, now, 0.03);
   modOsc.frequency.setTargetAtTime(modFreq, now, 0.03);
@@ -193,7 +193,7 @@ function updateAudioStep() {
   filter.frequency.setTargetAtTime(baseFreq * 1.5, now, 0.03);
   filter.Q.setTargetAtTime(filterQ, now, 0.03);
 
-  // Aggiornamento GUI
+  // GUI Update
   scanPosEl.innerText = `${scanIndex + 1} / ${imageAnalysisData.length}`;
   entropyValEl.innerText = point.entropy.toFixed(3);
   gradientValEl.innerText = point.edge.toFixed(3);
