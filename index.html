@@ -1,21 +1,21 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>L'intima esteriorità delle cose | Sound Art Sonifier</title>
+  <title>Image Sounder | Sound Art Sonifier</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>L'intima esteriorità delle cose</h1>
-      <p class="subtitle">Dispositivo elettroacustico per la traduzione di matrici visive in eventi sonori transitivi.</p>
+      <h1>Image Sounder</h1>
+      <p class="subtitle">Electroacoustic device for translating visual matrices into transitive sound events.</p>
     </header>
 
     <main>
       <div class="dropzone" id="dropzone">
-        <p id="dropText">Trascina qui un'immagine o fai clic per caricarla</p>
+        <p id="dropText">Drag and drop an image here or click to upload</p>
         <input type="file" id="fileInput" accept="image/*" style="display: none;">
       </div>
 
@@ -24,20 +24,20 @@
       </div>
 
       <div class="controls">
-        <button id="playBtn" disabled>Avvia Trasduzione Sonora</button>
-        <button id="stopBtn" disabled>Interrompi</button>
+        <button id="playBtn" disabled>Start Sound Transduction</button>
+        <button id="stopBtn" disabled>Stop</button>
       </div>
 
       <div class="status-panel">
-        <p><strong>Punto Scansione:</strong> <span id="scanPos">0 / 0</span></p>
-        <p><strong>Entropia Locale:</strong> <span id="entropyVal">0.00</span></p>
-        <p><strong>Gradiente di Bordo (Sobel):</strong> <span id="gradientVal">0.00</span></p>
-        <p><strong>Frequenza Fondamentale:</strong> <span id="freqVal">0 Hz</span></p>
+        <p><strong>Scan Position:</strong> <span id="scanPos">0 / 0</span></p>
+        <p><strong>Local Entropy:</strong> <span id="entropyVal">0.00</span></p>
+        <p><strong>Edge Gradient (Sobel):</strong> <span id="gradientVal">0.00</span></p>
+        <p><strong>Fundamental Frequency:</strong> <span id="freqVal">0 Hz</span></p>
       </div>
     </main>
 
     <footer>
-      <p>Ispirato alla riflessione sull'invisibilità del presente sonoro e il ruolo dell'osservatore.</p>
+      <p>Image Sounder — Algorithmic Sound Art Repository</p>
     </footer>
   </div>
 
