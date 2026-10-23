@@ -10,7 +10,7 @@
   <div class="container">
     <header>
       <h1>Image Sounder</h1>
-      <p class="subtitle">Electroacoustic device for translating visual matrices into transitive sound events.</p>
+      <p class="subtitle">Electroacoustic device for translating visual matrices into transitive sound events and realtime phase-space fractal structures.</p>
     </header>
 
     <main>
@@ -19,8 +19,15 @@
         <input type="file" id="fileInput" accept="image/*" style="display: none;">
       </div>
 
-      <div class="preview-container">
-        <canvas id="imageCanvas"></canvas>
+      <div class="display-grid">
+        <div class="canvas-box">
+          <span class="canvas-label">Source Matrix</span>
+          <canvas id="imageCanvas"></canvas>
+        </div>
+        <div class="canvas-box">
+          <span class="canvas-label">Acoustic Phase-Space Fractal</span>
+          <canvas id="fractalCanvas"></canvas>
+        </div>
       </div>
 
       <div class="controls">
