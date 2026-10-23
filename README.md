@@ -18,4 +18,27 @@ The project explores the ontological difference between **optical time** (static
 * **GitHub Pages Ready:** Designed for seamless deployment on static hosting platforms.
 
 ## Repository Structure
+/
+├── index.html    # Semantic structure and control panel
+├── style.css     # Minimalist dark-mode styling
+└── main.js       # Image analysis algorithms & Web Audio FM synthesizer
+## Getting Started
 
+### Local Setup
+1. Clone this repository:
+   ```bash
+   git clone [https://github.com/your-username/image-sounder.git](https://github.com/your-username/image-sounder.git)
+​2. Open index.html directly in any modern web browser.
+Live Deployment via GitHub Pages
+​Push the code to your GitHub repository.
+​Go to Settings \rightarrow Pages.
+​Under Build and deployment, select the main branch and click Save.
+​Your application will be live at https://your-username.github.io/image-sounder/.
+
+##​How It Works
+1. ​Upload: Drag & drop any image into the canvas area.
+2. ​Analysis: The image is downsampled to a lightweight grid where each cell's luminance, edge magnitude, and entropy are computed.
+3. ​Transduction: Click Start Sound Transduction to initiate a non-linear scan through the matrix, triggering dynamic micro-modulations in real time.
+
+##​License
+​This project is open-source and available under the MIT License.
