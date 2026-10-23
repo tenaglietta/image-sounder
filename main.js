@@ -1,5 +1,5 @@
 // Algorithm Configuration
-const GRID_SIZE = 32; // 32x32 grid = 1024 scan points (lightweight)
+const GRID_SIZE = 32; // 32x32 grid = 1024 scan points
 let audioCtx = null;
 let currentOsc = null;
 let modOsc = null;
@@ -11,12 +11,16 @@ let isPlaying = false;
 let scanIndex = 0;
 let scanInterval = null;
 let imageAnalysisData = [];
+let lastFractalPoint = null;
 
 // DOM Elements
 const dropzone = document.getElementById('dropzone');
 const fileInput = document.getElementById('fileInput');
 const canvas = document.getElementById('imageCanvas');
 const ctx = canvas.getContext('2d');
+const fractalCanvas = document.getElementById('fractalCanvas');
+const fCtx = fractalCanvas.getContext('2d');
+
 const playBtn = document.getElementById('playBtn');
 const stopBtn = document.getElementById('stopBtn');
 
@@ -24,6 +28,10 @@ const scanPosEl = document.getElementById('scanPos');
 const entropyValEl = document.getElementById('entropyVal');
 const gradientValEl = document.getElementById('gradientVal');
 const freqValEl = document.getElementById('freqVal');
+
+// Setup Canvas Sizes
+fractalCanvas.width = 300;
+fractalCanvas.height = 300;
 
 // Upload Events
 dropzone.addEventListener('click', () => fileInput.click());
@@ -42,10 +50,17 @@ function handleImage(file) {
     canvas.height = GRID_SIZE;
     ctx.drawImage(img, 0, 0, GRID_SIZE, GRID_SIZE);
     analyzeImage();
+    resetFractalCanvas();
     playBtn.disabled = false;
     document.getElementById('dropText').innerText = `Loaded: ${file.name}`;
   };
   img.src = URL.createObjectURL(file);
+}
+
+function resetFractalCanvas() {
+  fCtx.fillStyle = '#050505';
+  fCtx.fillRect(0, 0, fractalCanvas.width, fractalCanvas.height);
+  lastFractalPoint = null;
 }
 
 // Structural Analysis: Entropy + Sobel Gradient + Trajectory
@@ -54,19 +69,16 @@ function analyzeImage() {
   const data = imgData.data;
   imageAnalysisData = [];
 
-  // Convert to grayscale
   const gray = new Float32Array(GRID_SIZE * GRID_SIZE);
   for (let i = 0; i < data.length; i += 4) {
     gray[i / 4] = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114) / 255;
   }
 
-  // Generate non-linear scan points (Adaptive zigzag curve)
   for (let y = 0; y < GRID_SIZE; y++) {
     for (let x = 0; x < GRID_SIZE; x++) {
       const actualX = (y % 2 === 0) ? x : (GRID_SIZE - 1 - x);
       const idx = y * GRID_SIZE + actualX;
 
-      // 1. Edge Gradient Calculation (Simplified Sobel)
       let gx = 0, gy = 0;
       if (actualX > 0 && actualX < GRID_SIZE - 1 && y > 0 && y < GRID_SIZE - 1) {
         gx = -gray[(y - 1) * GRID_SIZE + (actualX - 1)] + gray[(y - 1) * GRID_SIZE + (actualX + 1)]
@@ -78,7 +90,6 @@ function analyzeImage() {
       }
       const edgeMagnitude = Math.min(1, Math.sqrt(gx * gx + gy * gy));
 
-      // 2. Local Entropy / Variation Calculation (3x3 Neighborhood)
       let sum = 0, sqSum = 0, count = 0;
       for (let dy = -1; dy <= 1; dy++) {
         for (let dx = -1; dx <= 1; dx++) {
@@ -99,7 +110,7 @@ function analyzeImage() {
         y: y,
         luminance: gray[idx],
         edge: edgeMagnitude,
-        entropy: Math.sqrt(variance) * 2 // Normalized
+        entropy: Math.sqrt(variance) * 2
       });
     }
   }
@@ -117,17 +128,14 @@ function initAudio() {
   filter = audioCtx.createBiquadFilter();
   filter.type = 'bandpass';
 
-  // Carrier Oscillator
   currentOsc = audioCtx.createOscillator();
   currentOsc.type = 'sine';
 
-  // Modulator Oscillator (Frequency Modulation for Timbral Roughness)
   modOsc = audioCtx.createOscillator();
   modOsc.type = 'triangle';
 
   modGain = audioCtx.createGain();
 
-  // Audio Connections
   modOsc.connect(modGain);
   modGain.connect(currentOsc.frequency);
   currentOsc.connect(filter);
@@ -145,10 +153,10 @@ playBtn.addEventListener('click', () => {
     if (audioCtx.state === 'suspended') audioCtx.resume();
     isPlaying = true;
     scanIndex = 0;
+    resetFractalCanvas();
     playBtn.disabled = true;
     stopBtn.disabled = false;
 
-    // Scan every 60ms (smooth rhythm)
     scanInterval = setInterval(updateAudioStep, 60);
   }
 });
@@ -165,7 +173,38 @@ function stopAudio() {
   }
 }
 
-// Update Frequency and Timbral Parameters for each image point
+// Render Realtime Phase-Space Fractal
+function drawFractalStep(baseFreq, point) {
+  const cx = fractalCanvas.width / 2;
+  const cy = fractalCanvas.height / 2;
+
+  // Polar mapping driven by frequency, entropy, and edge gradient
+  const angle = (scanIndex * 0.1) + (point.luminance * Math.PI * 2);
+  const radius = (baseFreq / 1200) * (cx * 0.8) + (point.entropy * 30);
+
+  const posX = cx + Math.cos(angle) * radius;
+  const posY = cy + Math.sin(angle) * radius;
+
+  // Draw continuous trajectory line
+  if (lastFractalPoint) {
+    fCtx.strokeStyle = `rgba(0, 255, 136, ${0.2 + point.entropy * 0.8})`;
+    fCtx.lineWidth = 1 + point.edge * 3;
+    fCtx.beginPath();
+    fCtx.moveTo(lastFractalPoint.x, lastFractalPoint.y);
+    fCtx.lineTo(posX, posY);
+    fCtx.stroke();
+  }
+
+  // Draw node points for local contrast
+  fCtx.fillStyle = `rgba(255, 255, 255, ${0.4 + point.edge * 0.6})`;
+  fCtx.beginPath();
+  fCtx.arc(posX, posY, 1 + point.edge * 4, 0, Math.PI * 2);
+  fCtx.fill();
+
+  lastFractalPoint = { x: posX, y: posY };
+}
+
+// Update Audio Step
 function updateAudioStep() {
   if (scanIndex >= imageAnalysisData.length) {
     stopAudio();
@@ -174,17 +213,11 @@ function updateAudioStep() {
 
   const point = imageAnalysisData[scanIndex];
 
-  // Non-melodic mapping: Continuous microtonal base frequency (60Hz - 1200Hz)
   const baseFreq = 60 + Math.pow(point.luminance, 2.2) * 1140;
-  
-  // Edge gradient determines modulator frequency (dissonance)
   const modFreq = 10 + point.edge * 300;
-  
-  // Entropy/variation determines modulation intensity and filter Q
   const modDepth = point.entropy * 400;
   const filterQ = 1 + (1 - point.entropy) * 15;
 
-  // Apply audio parameters with smooth transitions
   const now = audioCtx.currentTime;
   currentOsc.frequency.setTargetAtTime(baseFreq, now, 0.03);
   modOsc.frequency.setTargetAtTime(modFreq, now, 0.03);
@@ -192,6 +225,9 @@ function updateAudioStep() {
   
   filter.frequency.setTargetAtTime(baseFreq * 1.5, now, 0.03);
   filter.Q.setTargetAtTime(filterQ, now, 0.03);
+
+  // Render fractal node
+  drawFractalStep(baseFreq, point);
 
   // GUI Update
   scanPosEl.innerText = `${scanIndex + 1} / ${imageAnalysisData.length}`;
